@@ -18,7 +18,7 @@ module.exports = {
      * @param {number} frames
      * @param {requestCallback} cb - The callback that is run once complete.
      */
-    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, cb){
+    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', cb){
         // Set some sensible upper / lower bounds
         this.width = this.clamp(width, 150, 500);
         this.height = this.clamp(height, 150, 500);
@@ -35,6 +35,8 @@ module.exports = {
         this.encoder = new GIFEncoder(this.width, this.height);
         this.canvas = new Canvas(this.width, this.height);
         this.ctx = this.canvas.getContext('2d');
+
+        this.fontFamily = font;
         
         // calculate the time difference (if any)
         let timeResult = this.time(time);
@@ -103,7 +105,7 @@ module.exports = {
         
         // estimate the font size based on the provided width
         let fontSize = Math.floor(this.width / 12) + 'px';
-        let fontFamily = 'Courier New'; // monospace works slightly better
+        let fontFamily = this.fontFamily; // monospace works slightly better
         
         // set the font style
         ctx.font = [fontSize, fontFamily].join(' ');
