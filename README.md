@@ -11,6 +11,7 @@ The very simple app I have created allows you to generate a countdown timer anim
 * **bg** - hex colour code for the background [defaults to 000000]
 * **color** - hex colour code for the text [defaults to ffffff]
 * **name** - filename used for the generated gif [defaults to 'default']
+* **font** - font family used on gif text (select from available fonts under `.fonts`)
             
 ## Generate Examples
 
