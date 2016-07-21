@@ -18,7 +18,7 @@ module.exports = {
      * @param {number} frames
      * @param {requestCallback} cb - The callback that is run once complete.
      */
-    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', cb){
+    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', mode = 'L', cb){
         // Set some sensible upper / lower bounds
         this.width = this.clamp(width, 150, 1000);
         this.height = this.clamp(height, 150, 1000);
@@ -42,6 +42,7 @@ module.exports = {
         this.fontFamily = font;
 
         this.message = message;
+        this.mode = mode;
         
         // calculate the time difference (if any)
         let timeResult = this.time(time);
@@ -145,11 +146,15 @@ module.exports = {
                 ctx.fillStyle = this.bg;
                 ctx.fillRect(0, 0, this.width, this.height);
 
-                var sub = ['Dias', 'Horas', 'Minutos', 'Segundos'];
+                var sub = {
+                    S: ['D', 'H', 'M', 'S'],
+                    M: ['Dias', 'Horas', 'Min.', 'Seg.'],
+                    L: ['Dias', 'Horas', 'Minutos', 'Segundos']
+                };
 
                 // Include days/hours/minutes/seconds text
                 var block = this.quarterWidth / 2;
-                for (var j = 0; j < sub.length; j++) {
+                for (var j = 0; j < 4; j++) {
                     ctx.font = [fontSize, fontFamily].join(' ');
                     // paint text
                     ctx.fillStyle = this.textColor;
@@ -159,7 +164,7 @@ module.exports = {
                     ctx.font = [(Math.floor(this.width / 24) + 'px'), fontFamily].join(' ');
                     // ctx.fontFamily = null;
                     ctx.fillStyle = this.textColor;
-                    ctx.fillText(sub[j], block, this.quarterHeight);
+                    ctx.fillText(sub[this.mode][j], block, this.quarterHeight);
                     block += this.quarterWidth;
                 }
                 
