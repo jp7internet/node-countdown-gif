@@ -22,7 +22,7 @@ module.exports = {
         char = char || '0';
         str = String(str);
 
-        return str.length === length ? str : char.repeat(length - str.length) + str;
+        return str.length >= length ? str : char.repeat(length - str.length) + str;
     },
     init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', mode = 'L', showDays = true, showMillis = false, cb){
         // Set some sensible upper / lower bounds
@@ -167,7 +167,7 @@ module.exports = {
 
                 // if this.showDays === false, convert days into hours
                 if (!this.showDays) {   
-                    hours += (days * 24);
+                    hours = this.pad(String(parseInt(hours) + (days * 24)), "0". 2);
 
                     string.shift();
                     string[0] = hours;
