@@ -18,7 +18,7 @@ module.exports = {
      * @param {number} frames
      * @param {requestCallback} cb - The callback that is run once complete.
      */
-    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', mode = 'L', cb){
+    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', mode = 'L', showDays = true, cb){
         // Set some sensible upper / lower bounds
         this.width = this.clamp(width, 150, 1000);
         this.height = this.clamp(height, 150, 1000);
@@ -43,6 +43,8 @@ module.exports = {
 
         this.message = message;
         this.mode = mode;
+
+        this.showDays = showDays === 'true';
         
         // calculate the time difference (if any)
         let timeResult = this.time(time);
@@ -127,34 +129,59 @@ module.exports = {
         // if we have a moment duration object
         if(typeof timeResult === 'object'){
             for(let i = 0; i < this.frames; i++){
+                // declare string array
+                let string = [];
+
                 // extract the information we need from the duration
-                let days = Math.floor(timeResult.asDays());
-                let hours = Math.floor(timeResult.asHours() - (days * 24));
-                let minutes = Math.floor(timeResult.asMinutes()) - (days * 24 * 60) - (hours * 60);
-                let seconds = Math.floor(timeResult.asSeconds()) - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
-                
-                // make sure we have at least 2 characters in the string
-                days = (days.toString().length == 1) ? '0' + days : days;
-                hours = (hours.toString().length == 1) ? '0' + hours : hours;
-                minutes = (minutes.toString().length == 1) ? '0' + minutes : minutes;
-                seconds = (seconds.toString().length == 1) ? '0' + seconds : seconds;
-                
-                // build the date string
-                let string = [days, hours, minutes, seconds];
+                if (this.showDays) {   
+                    let days = Math.floor(timeResult.asDays());
+                    let hours = Math.floor(timeResult.asHours() - (days * 24));
+                    let minutes = Math.floor(timeResult.asMinutes()) - (days * 24 * 60) - (hours * 60);
+                    let seconds = Math.floor(timeResult.asSeconds()) - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
+
+                    // make sure we have at least 2 characters in the string
+                    days = (days.toString().length == 1) ? '0' + days : days;
+                    hours = (hours.toString().length == 1) ? '0' + hours : hours;
+                    minutes = (minutes.toString().length == 1) ? '0' + minutes : minutes;
+                    seconds = (seconds.toString().length == 1) ? '0' + seconds : seconds;
+                    
+                    // build the date string
+                    string = [days, hours, minutes, seconds];
+
+                    var sub = {
+                        S: ['D', 'H', 'M', 'S'],
+                        M: ['Dias', 'Horas', 'Min.', 'Seg.'],
+                        L: ['Dias', 'Horas', 'Minutos', 'Segundos']
+                    };
+
+                } else {
+                    let hours = Math.floor(timeResult.asHours());
+                    let minutes = Math.floor(timeResult.asMinutes()) - (hours * 60);
+                    let seconds = Math.floor(timeResult.asSeconds()) - (hours * 60 * 60) - (minutes * 60);
+
+                    // make sure we have at least 2 characters in the string\
+                    hours = (hours.toString().length == 1) ? '0' + hours : hours;
+                    minutes = (minutes.toString().length == 1) ? '0' + minutes : minutes;
+                    seconds = (seconds.toString().length == 1) ? '0' + seconds : seconds;
+
+                    var sub = {
+                        S: ['H', 'M', 'S'],
+                        M: ['Horas', 'Min.', 'Seg.'],
+                        L: ['Horas', 'Minutos', 'Segundos']
+                    };
+                    
+                    // build the date string
+                    string = [hours, minutes, seconds];
+                }
+
                 
                 // paint BG
                 ctx.fillStyle = this.bg;
                 ctx.fillRect(0, 0, this.width, this.height);
 
-                var sub = {
-                    S: ['D', 'H', 'M', 'S'],
-                    M: ['Dias', 'Horas', 'Min.', 'Seg.'],
-                    L: ['Dias', 'Horas', 'Minutos', 'Segundos']
-                };
-
                 // Include days/hours/minutes/seconds text
-                var block = this.quarterWidth / 2;
-                for (var j = 0; j < 4; j++) {
+                var block = (this.width / string.length) / 2;
+                for (var j = 0; j < string.length; j++) {
                     ctx.font = [fontSize, fontFamily].join(' ');
                     // paint text
                     ctx.fillStyle = this.textColor;
@@ -163,7 +190,7 @@ module.exports = {
                     // colons - insert if not last element
                     if (j < 3) { 
                         ctx.textAlign = 'right';
-                        ctx.fillText(":", this.quarterWidth * (j + 1), this.halfHeight + this.quarterHeight / 2);
+                        ctx.fillText(":", (this.width / string.length) * (j + 1), this.halfHeight + this.quarterHeight / 2);
                         ctx.textAlign = 'center';
                     }
 
@@ -172,7 +199,7 @@ module.exports = {
                     // ctx.fontFamily = null;
                     ctx.fillStyle = this.textColor;
                     ctx.fillText(sub[this.mode][j], block, this.quarterHeight);
-                    block += this.quarterWidth;
+                    block += (this.width / string.length);
                 }
                 
                 // add finalised frame to the gif

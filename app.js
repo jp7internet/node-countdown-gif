@@ -21,13 +21,13 @@ app.get('/', function (req, res) {
 
 // generate and download the gif
 app.get('/generate', function (req, res) {
-    let {time, width, height, color, bg, name, frames, font, message, mode} = req.query;
+    let {time, width, height, color, bg, name, frames, font, message, mode, showDays} = req.query;
 
     if(!time){
         throw Error('Time parameter is required.');
     }
 
-    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, () => {
+    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, () => {
         let filePath = tmpDir + name + '.gif';
         res.download(filePath);
     });
@@ -35,13 +35,13 @@ app.get('/generate', function (req, res) {
 
 // serve the gif to a browser
 app.get('/serve', function (req, res) {
-    let {time, width, height, color, bg, name, frames, font, message, mode} = req.query;
+    let {time, width, height, color, bg, name, frames, font, message, mode, showDays} = req.query;
 
     if(!time){
         throw Error('Time parameter is required.');
     }
 
-    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, () => {
+    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, () => {
         let filePath = tmpDir + name + '.gif';
         res.sendFile(filePath);
     });
