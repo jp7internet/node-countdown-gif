@@ -18,7 +18,13 @@ module.exports = {
      * @param {number} frames
      * @param {requestCallback} cb - The callback that is run once complete.
      */
-    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', mode = 'L', showDays = true, cb){
+    pad: function(str, char, length) {
+        char = char || '0';
+        str = String(str);
+
+        return str.length === length ? str : char.repeat(length - str.length) + str;
+    },
+    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', mode = 'L', showDays = true, showMillis = false, cb){
         // Set some sensible upper / lower bounds
         this.width = this.clamp(width, 150, 1000);
         this.height = this.clamp(height, 150, 1000);
@@ -45,6 +51,7 @@ module.exports = {
         this.mode = mode;
 
         this.showDays = showDays === 'true';
+        this.showMillis = showMillis === 'true';
         
         // calculate the time difference (if any)
         let timeResult = this.time(time);
@@ -120,60 +127,68 @@ module.exports = {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
+        let mult = this.showMillis ? 4 : 1;
+        let delay = 1000 / mult;
+
         // start encoding gif with following settings
         enc.start();
         enc.setRepeat(0);
-        enc.setDelay(1000);
+        enc.setDelay(delay);
         enc.setQuality(10);
 
         // if we have a moment duration object
+        let min = 1 + (delay * (mult - 1));
+        let max = delay * mult;
         if(typeof timeResult === 'object'){
-            for(let i = 0; i < this.frames; i++){
+            for(let i = 0; i < this.frames * mult; i++){
                 // declare string array
                 let string = [];
 
-                // extract the information we need from the duration
-                if (this.showDays) {   
-                    let days = Math.floor(timeResult.asDays());
-                    let hours = Math.floor(timeResult.asHours() - (days * 24));
-                    let minutes = Math.floor(timeResult.asMinutes()) - (days * 24 * 60) - (hours * 60);
-                    let seconds = Math.floor(timeResult.asSeconds()) - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
+                let days = Math.floor(timeResult.asDays());
+                let hours = Math.floor(timeResult.asHours() - (days * 24));
+                let minutes = Math.floor(timeResult.asMinutes()) - (days * 24 * 60) - (hours * 60);
+                let seconds = Math.floor(timeResult.asSeconds()) - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
 
-                    // make sure we have at least 2 characters in the string
-                    days = (days.toString().length == 1) ? '0' + days : days;
-                    hours = (hours.toString().length == 1) ? '0' + hours : hours;
-                    minutes = (minutes.toString().length == 1) ? '0' + minutes : minutes;
-                    seconds = (seconds.toString().length == 1) ? '0' + seconds : seconds;
-                    
-                    // build the date string
-                    string = [days, hours, minutes, seconds];
+                // make sure we have at least 2 characters in the string
+                days = (days.toString().length == 1) ? '0' + days : days;
+                hours = (hours.toString().length == 1) ? '0' + hours : hours;
+                minutes = (minutes.toString().length == 1) ? '0' + minutes : minutes;
+                seconds = (seconds.toString().length == 1) ? '0' + seconds : seconds;
+                
+                // build the date string
+                string = [days, hours, minutes, seconds];
 
-                    var sub = {
-                        S: ['D', 'H', 'M', 'S'],
-                        M: ['Dias', 'Horas', 'Min.', 'Seg.'],
-                        L: ['Dias', 'Horas', 'Minutos', 'Segundos']
-                    };
+                var sub = {
+                    S: ['D', 'H', 'M', 'S'],
+                    M: ['Dias', 'Horas', 'Min.', 'Seg.'],
+                    L: ['Dias', 'Horas', 'Minutos', 'Segundos']
+                };
 
-                } else {
-                    let hours = Math.floor(timeResult.asHours());
-                    let minutes = Math.floor(timeResult.asMinutes()) - (hours * 60);
-                    let seconds = Math.floor(timeResult.asSeconds()) - (hours * 60 * 60) - (minutes * 60);
 
-                    // make sure we have at least 2 characters in the string\
-                    hours = (hours.toString().length == 1) ? '0' + hours : hours;
-                    minutes = (minutes.toString().length == 1) ? '0' + minutes : minutes;
-                    seconds = (seconds.toString().length == 1) ? '0' + seconds : seconds;
+                // if this.showDays === false, convert days into hours
+                if (!this.showDays) {   
+                    hours += (days * 24);
 
-                    var sub = {
-                        S: ['H', 'M', 'S'],
-                        M: ['Horas', 'Min.', 'Seg.'],
-                        L: ['Horas', 'Minutos', 'Segundos']
-                    };
-                    
-                    // build the date string
-                    string = [hours, minutes, seconds];
+                    string.shift();
+                    string[0] = hours;
+
+                    for (var key in sub) {
+                        sub[key].shift();
+                    }
                 }
 
+                // if this.showMillis, calculate milliseconds and append
+                if (this.showMillis) {
+                    let milliseconds = this.clamp(Math.floor(Math.random() * (max - min + 1)) + min, 0, 999); // Must be less than 1000
+                    min -= delay;
+                    max -= delay;
+
+                    sub["S"].push('ms');
+                    sub["M"].push('Mil.');
+                    sub["L"].push('Milissegundos');
+
+                    string.push(this.pad(milliseconds, '0', 3));
+                }
                 
                 // paint BG
                 ctx.fillStyle = this.bg;
@@ -188,7 +203,7 @@ module.exports = {
                     ctx.fillText(string[j], block, this.halfHeight + this.quarterHeight / 2);
 
                     // colons - insert if not last element
-                    if (j < 3) { 
+                    if (j < string.length - 1) { 
                         ctx.textAlign = 'right';
                         ctx.fillText(":", (this.width / string.length) * (j + 1), this.halfHeight + this.quarterHeight / 2);
                         ctx.textAlign = 'center';
@@ -206,7 +221,11 @@ module.exports = {
                 enc.addFrame(ctx);
                 
                 // remove a second for the next loop
-                timeResult.subtract(1, 'seconds');
+                if (i % mult === 0 && i != 0) {
+                    min = 1 + (delay * (mult - 1));
+                    max = delay * mult;
+                    timeResult.subtract(1, 'seconds');
+                }
             }
         } else {
             // Date has passed so only using a string
