@@ -167,7 +167,7 @@ module.exports = {
 
                 // if this.showDays === false, convert days into hours
                 if (!this.showDays) {   
-                    hours = this.pad(String(parseInt(hours) + (days * 24)), "0". 2);
+                    hours = this.pad(String(parseInt(hours) + (days * 24)), "0", 2);
 
                     string.shift();
                     string[0] = hours;
