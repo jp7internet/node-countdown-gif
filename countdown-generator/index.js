@@ -18,7 +18,7 @@ module.exports = {
      * @param {number} frames
      * @param {requestCallback} cb - The callback that is run once complete.
      */
-    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', cb){
+    init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', cb){
         // Set some sensible upper / lower bounds
         this.width = this.clamp(width, 150, 1000);
         this.height = this.clamp(height, 150, 1000);
@@ -31,12 +31,17 @@ module.exports = {
         // loop optimisations
         this.halfWidth = Number(this.width / 2);
         this.halfHeight = Number(this.height / 2);
+
+        this.quarterWidth = Math.floor(Number(this.width / 4));
+        this.quarterHeight = Math.floor(Number(this.height / 4));
         
         this.encoder = new GIFEncoder(this.width, this.height);
         this.canvas = new Canvas(this.width, this.height);
         this.ctx = this.canvas.getContext('2d');
 
         this.fontFamily = font;
+
+        this.message = message;
         
         // calculate the time difference (if any)
         let timeResult = this.time(time);
@@ -70,7 +75,7 @@ module.exports = {
         
         // either the date has passed, or we have a difference
         if(difference <= 0){
-            return 'Date has passed!';
+            return this.message;
         } else {
             // duration of the difference
             return moment.duration(difference);
@@ -134,15 +139,29 @@ module.exports = {
                 seconds = (seconds.toString().length == 1) ? '0' + seconds : seconds;
                 
                 // build the date string
-                let string = [days, 'd ', hours, 'h ', minutes, 'm ', seconds, 's'].join('');
+                let string = [days, hours, minutes, seconds];
                 
                 // paint BG
                 ctx.fillStyle = this.bg;
                 ctx.fillRect(0, 0, this.width, this.height);
-                
-                // paint text
-                ctx.fillStyle = this.textColor;
-                ctx.fillText(string, this.halfWidth, this.halfHeight);
+
+                var sub = ['Dias', 'Horas', 'Minutos', 'Segundos'];
+
+                // Include days/hours/minutes/seconds text
+                var block = this.quarterWidth / 2;
+                for (var j = 0; j < sub.length; j++) {
+                    ctx.font = [fontSize, fontFamily].join(' ');
+                    // paint text
+                    ctx.fillStyle = this.textColor;
+                    ctx.fillText(string[j], block, this.halfHeight + this.quarterHeight / 2);
+
+                    // subtitle text
+                    ctx.font = [(Math.floor(this.width / 24) + 'px'), fontFamily].join(' ');
+                    // ctx.fontFamily = null;
+                    ctx.fillStyle = this.textColor;
+                    ctx.fillText(sub[j], block, this.quarterHeight);
+                    block += this.quarterWidth;
+                }
                 
                 // add finalised frame to the gif
                 enc.addFrame(ctx);
