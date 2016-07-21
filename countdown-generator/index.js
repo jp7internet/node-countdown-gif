@@ -160,6 +160,13 @@ module.exports = {
                     ctx.fillStyle = this.textColor;
                     ctx.fillText(string[j], block, this.halfHeight + this.quarterHeight / 2);
 
+                    // colons - insert if not last element
+                    if (j < 3) { 
+                        ctx.textAlign = 'right';
+                        ctx.fillText(":", this.quarterWidth * (j + 1), this.halfHeight + this.quarterHeight / 2);
+                        ctx.textAlign = 'center';
+                    }
+
                     // subtitle text
                     ctx.font = [(Math.floor(this.width / 24) + 'px'), fontFamily].join(' ');
                     // ctx.fontFamily = null;
