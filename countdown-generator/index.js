@@ -25,6 +25,8 @@ module.exports = {
         return str.length >= length ? str : char.repeat(length - str.length) + str;
     },
     init: function(time, width=200, height=200, color='ffffff', bg='000000', name='default', frames=30, font='Courier New', message = 'Promoção Encerrada!', mode = 'L', showDays = true, showMillis = false, cb){
+        console.log(process.env.FRAME_COUNT);
+
         // Set some sensible upper / lower bounds
         this.width = this.clamp(width, 150, 1000);
         this.height = this.clamp(height, 150, 1000);
@@ -127,7 +129,7 @@ module.exports = {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        let mult = this.showMillis ? 4 : 1;
+        let mult = this.showMillis ? process.env.FRAME_COUNT : 1;
         let delay = 1000 / mult;
 
         // start encoding gif with following settings
