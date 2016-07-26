@@ -8,6 +8,10 @@ const path = require('path');
 const tmpDir = __dirname + '/tmp/';
 const publicDir = __dirname + '/public/';
 
+const env = require('env');
+
+env.config({ silent: true });
+
 // canvas generator
 const CountdownGenerator = require('./countdown-generator');
 
