@@ -4,8 +4,9 @@
 const express = require('express');
 const app = express();
 const path = require('path');
+const os = require('os');
+const tmpDir = os.tmpdir();
 
-const tmpDir = __dirname + '/tmp/';
 const publicDir = __dirname + '/public/';
 
 const env = require('dotenv');
@@ -33,9 +34,22 @@ app.get('/generate', function (req, res) {
         throw Error('Time parameter is required.');
     }
 
-    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, millis, millis, millis, () => {
-        let filePath = tmpDir + name + '.gif';
-        res.download(filePath);
+    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, millis, () => {
+        console.log('Callback');
+
+        let filePath = tmpDir + '/' + name + '.gif';
+
+        exec('convert -delay 100 ' + tmpDir + '/animation*.gif ' + filePath, (error, stdout, stderr) => {
+            if (error) {
+                console.error('exec error:', error);
+                return;
+            }
+
+            console.log('stdout:', stdout);
+            console.log('stderr:', stderr);
+
+            res.download(filePath);
+        });
     });
 });
 
@@ -52,7 +66,9 @@ app.get('/serve', function (req, res) {
         // res.sendFile(filePath);
         console.log('Callback');
 
-        exec('convert -delay 100 tmp/animation*.gif tmp/' + name + '.gif', (error, stdout, stderr) => {
+        let filePath = tmpDir + '/' + name + '.gif';
+
+        exec('convert -delay 100 ' + tmpDir + '/animation*.gif ' + filePath, (error, stdout, stderr) => {
             if (error) {
                 console.error('exec error:', error);
                 return;
@@ -61,7 +77,6 @@ app.get('/serve', function (req, res) {
             console.log('stdout:', stdout);
             console.log('stderr:', stderr);
 
-            let filePath = process.cwd() + '/tmp/' + name + '.gif';
             res.sendFile(filePath);
         });
     });

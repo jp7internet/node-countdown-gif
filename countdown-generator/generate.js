@@ -1,6 +1,8 @@
 var webserver = require('webserver');
 var server = webserver.create();
 var system = require('system');
+
+var tmpDir = system.env['TMPDIR'];
 var port = system.args[1];
 
 var service = server.listen(port, function(request, response) {
@@ -9,7 +11,7 @@ var service = server.listen(port, function(request, response) {
     var limit = parseInt(qsresults[1]);
 
     var start = performance.now();
-    var output = 'tmp/outputserver'+port;
+    var output = tmpDir + 'outputserver'+port;
     
     console.log('Abrindo');
     var page = require('webpage').create();

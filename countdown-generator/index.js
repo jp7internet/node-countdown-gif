@@ -3,17 +3,18 @@ const exec = require('child_process').exec;
 const moment = require('moment');
 const request = require('request');
 const os = require('os');
+const tmpDir = os.tmpdir();
 
 module.exports = {
     init: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 120, font = "monospace", message = "That's all folks!", mode = "M", showDays = true, millis = false, cb) {
 
         let diff = this.timeDiff(time, message);
 
-        var procs = millis ? os.cpus().length : 1;
+        var procs = os.cpus().length;
 
         // Round procs down to maximum divisor
         for (var i = procs; i > 0; i--) {
-            if (frames % procs === 0) {
+            if (frames % i === 0) {
                 procs = i;
                 break;
             }
@@ -22,7 +23,7 @@ module.exports = {
         // Declare object-scope variables
         this.partialFrames = frames / procs;
 
-        console.log(procs);
+        console.log("Using %d servers.", procs);
 
         var start = Date.now();
         var promises = [];
@@ -61,7 +62,7 @@ module.exports = {
         return new Promise((resolve, reject) => {
             request(options, function(response) {
 
-                var cmd = "convert -delay 100 tmp/outputserver" + port + "{" + offset + ".." + limit + "}.bmp tmp/animation_" + port + ".gif";
+                var cmd = "convert -delay 100 " + tmpDir + "/outputserver" + port + "{" + offset + ".." + limit + "}.bmp " + tmpDir + "/animation_" + port + ".gif";
                 console.log(cmd);
 
                 exec(cmd, (error, stdout, stderr) => {
@@ -69,7 +70,7 @@ module.exports = {
                         reject('exec error:' + error.Error);
                     }
 
-                    resolve('Generated tmp/animation_' + port + '.gif');
+                    resolve('Generated ' + tmpDir + '/animation_' + port + '.gif');
                 });
             });
         });
