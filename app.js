@@ -52,7 +52,7 @@ app.get('/serve', function (req, res) {
         // res.sendFile(filePath);
         console.log('Callback');
 
-        exec('convert -delay 100 tmp/outputserver*.bmp tmp/' + name + '.gif', (error, stdout, stderr) => {
+        exec('convert -delay 100 tmp/animation*.gif tmp/' + name + '.gif', (error, stdout, stderr) => {
             if (error) {
                 console.error('exec error:', error);
                 return;

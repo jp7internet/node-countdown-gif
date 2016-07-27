@@ -1,4 +1,5 @@
 const spawn = require('child_process').spawn;
+const exec = require('child_process').exec;
 const moment = require('moment');
 const request = require('request');
 
@@ -27,7 +28,7 @@ module.exports = {
         return moment.duration(difference);
     },
     encode: function(index, children, cb, start) {
-        var offset = 0 + (30 * index);
+        var offset = 1 + (30 * index);
         var limit = 30 + (30 * index);
 
         var options = {
@@ -35,10 +36,18 @@ module.exports = {
         };
 
         request(options, function(response) {
-            if (index === children - 1) { // Last request responded
-                typeof cb === 'function' && cb();
-                console.log(Date.now() - start, ' milliseconds to generate PNGs.');
-            }
+
+            var cmd = "convert -delay 100 tmp/outputserver400" + (index + 1) + "{" + offset + ".." + limit + "}.bmp tmp/animation_400" + (index + 1) + ".gif";
+            console.log(cmd);
+
+            exec(cmd, (error, stdout, stderr) => {
+                console.log('Generated tmp/animation_400' + (index + 1) + '.gif');
+
+                if (index === children - 1) { // Last request responded
+                    typeof cb === 'function' && cb();
+                    console.log(Date.now() - start, ' milliseconds to generate PNGs.');
+                }
+            });
         });
     }
 }

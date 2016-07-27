@@ -32,7 +32,7 @@ var service = server.listen(port, function(request, response) {
               page.render(output+i+'.bmp');
             }
             
-            for (var i = offset;i < limit;i++) {
+            for (var i = offset;i <= limit;i++) {
                 page.evaluate(function(i) {
                     document.getElementById('teste').innerHTML = '14:32:'+i;
                 }, i);  
