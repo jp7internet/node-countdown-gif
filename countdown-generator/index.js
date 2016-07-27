@@ -2,18 +2,31 @@ const spawn = require('child_process').spawn;
 const exec = require('child_process').exec;
 const moment = require('moment');
 const request = require('request');
+const os = require('os');
 
 module.exports = {
-    init: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 30, font = "monospace", message = "That's all folks!", mode = "M", showDays = true, millis = false, cb) {
+    init: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 120, font = "monospace", message = "That's all folks!", mode = "M", showDays = true, millis = false, cb) {
 
         let diff = this.timeDiff(time, message);
 
-        var children = millis ? process.env.FRAME_COUNT : 1;
+        var children = millis ? os.cpus().length : 1;
+
+        // Declare object-scope variables
+        this.partialFrames = frames / children;
+
+        console.log(children);
 
         var start = Date.now();
+        var promises = [];
+
         for (var i = 0; i < children; i++) {
-            this.encode(i, children, cb, start);
+            promises.push(this.encode(i, children, start));
         }
+
+        Promise.all(promises).then(function() {
+            console.log('Generated animations in %d milliseconds.', Date.now() - start);
+            typeof cb === 'function' && cb();
+        })
     },
     timeDiff: function (dateString, message) {
         let target = moment(dateString);
@@ -27,26 +40,29 @@ module.exports = {
 
         return moment.duration(difference);
     },
-    encode: function(index, children, cb, start) {
-        var offset = 1 + (30 * index);
-        var limit = 30 + (30 * index);
+    encode: function(index, children) {
+        var offset = 1 + (this.partialFrames * index);
+        var limit = this.partialFrames + (this.partialFrames * index);
+
+        var port = 4000 + (index + 1);
 
         var options = {
-            uri: 'http://localhost:400' + (index + 1) + "?offset=" + offset + "&limit=" + limit
+            uri: 'http://localhost:' + port  + "?offset=" + offset + "&limit=" + limit
         };
 
-        request(options, function(response) {
+        return new Promise((resolve, reject) => {
+            request(options, function(response) {
 
-            var cmd = "convert -delay 100 tmp/outputserver400" + (index + 1) + "{" + offset + ".." + limit + "}.bmp tmp/animation_400" + (index + 1) + ".gif";
-            console.log(cmd);
+                var cmd = "convert -delay 100 tmp/outputserver" + port + "{" + offset + ".." + limit + "}.bmp tmp/animation_" + port + ".gif";
+                console.log(cmd);
 
-            exec(cmd, (error, stdout, stderr) => {
-                console.log('Generated tmp/animation_400' + (index + 1) + '.gif');
+                exec(cmd, (error, stdout, stderr) => {
+                    if (error) {
+                        reject('exec error:' + error.Error);
+                    }
 
-                if (index === children - 1) { // Last request responded
-                    typeof cb === 'function' && cb();
-                    console.log(Date.now() - start, ' milliseconds to generate PNGs.');
-                }
+                    resolve('Generated tmp/animation_' + port + '.gif');
+                });
             });
         });
     }
