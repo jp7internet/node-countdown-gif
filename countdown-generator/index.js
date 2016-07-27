@@ -9,18 +9,26 @@ module.exports = {
 
         let diff = this.timeDiff(time, message);
 
-        var children = millis ? os.cpus().length : 1;
+        var procs = millis ? os.cpus().length : 1;
+
+        // Round procs down to maximum divisor
+        for (var i = procs; i > 0; i--) {
+            if (frames % procs === 0) {
+                procs = i;
+                break;
+            }
+        }
 
         // Declare object-scope variables
-        this.partialFrames = frames / children;
+        this.partialFrames = frames / procs;
 
-        console.log(children);
+        console.log(procs);
 
         var start = Date.now();
         var promises = [];
 
-        for (var i = 0; i < children; i++) {
-            promises.push(this.encode(i, children, start));
+        for (var i = 0; i < procs; i++) {
+            promises.push(this.encode(i));
         }
 
         Promise.all(promises).then(function() {
@@ -40,7 +48,7 @@ module.exports = {
 
         return moment.duration(difference);
     },
-    encode: function(index, children) {
+    encode: function(index) {
         var offset = 1 + (this.partialFrames * index);
         var limit = this.partialFrames + (this.partialFrames * index);
 
