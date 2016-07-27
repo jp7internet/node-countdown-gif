@@ -12,6 +12,7 @@ const publicDir = __dirname + '/public/';
 const env = require('dotenv');
 
 const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
 
 env.config({ silent: true });
 
@@ -78,6 +79,8 @@ app.get('/serve', function (req, res) {
             console.log('stderr:', stderr);
 
             res.sendFile(filePath);
+            execSync('rm ' + tmpDir + '/output*.bmp');
+            execSync('rm ' + tmpDir + '/animation*.gif');
         });
     });
 });
