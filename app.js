@@ -8,7 +8,9 @@ const path = require('path');
 const tmpDir = __dirname + '/tmp/';
 const publicDir = __dirname + '/public/';
 
-const env = require('env');
+const env = require('dotenv');
+
+const exec = require('child_process').exec;
 
 env.config({ silent: true });
 
@@ -46,8 +48,22 @@ app.get('/serve', function (req, res) {
     }
 
     CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, millis, () => {
-        let filePath = tmpDir + name + '.gif';
-        res.sendFile(filePath);
+        // let filePath = tmpDir + name + '.gif';
+        // res.sendFile(filePath);
+        console.log('Callback');
+
+        exec('convert -delay 100 tmp/outputserver*.bmp tmp/' + name + '.gif', (error, stdout, stderr) => {
+            if (error) {
+                console.error('exec error:', error);
+                return;
+            }
+
+            console.log('stdout:', stdout);
+            console.log('stderr:', stderr);
+
+            let filePath = process.cwd() + '/tmp/' + name + '.gif';
+            res.sendFile(filePath);
+        });
     });
 });
 
