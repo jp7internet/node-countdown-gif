@@ -27,33 +27,6 @@ app.get('/', function (req, res) {
     res.sendFile(publicDir + 'index.html');
 });
 
-// generate and download the gif
-app.get('/generate', function (req, res) {
-    let {time, width, height, color, bg, name, frames, font, message, mode, showDays, millis} = req.query;
-
-    if(!time){
-        throw Error('Time parameter is required.');
-    }
-
-    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, millis, () => {
-        console.log('Callback');
-
-        let filePath = tmpDir + '/' + name + '.gif';
-
-        exec('convert -delay 100 ' + tmpDir + '/animation*.gif ' + filePath, (error, stdout, stderr) => {
-            if (error) {
-                console.error('exec error:', error);
-                return;
-            }
-
-            console.log('stdout:', stdout);
-            console.log('stderr:', stderr);
-
-            res.download(filePath);
-        });
-    });
-});
-
 // serve the gif to a browser
 app.get('/serve', function (req, res) {
     let {time, width, height, color, bg, name, frames, font, message, mode, showDays, millis} = req.query;
