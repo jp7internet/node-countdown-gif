@@ -6,9 +6,11 @@ var tmpDir = system.env['TMPDIR'];
 var port = system.args[1];
 
 var service = server.listen(port, function(request, response) {
-    var qsresults = request.url.match(/\d+/g);
-    var offset = parseInt(qsresults[0]);
-    var limit = parseInt(qsresults[1]);
+    // var qsresults = request.url.match(/\d+/g);
+    // var offset = parseInt(qsresults[0]);
+    // var limit = parseInt(qsresults[1]);
+
+    var body = JSON.parse(request.post);
 
     var start = performance.now();
     var output = tmpDir + 'outputserver'+port;
@@ -16,9 +18,9 @@ var service = server.listen(port, function(request, response) {
     console.log('Abrindo');
     var page = require('webpage').create();
     page.settings.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36';
-    page.viewportSize = { width: 720, height: 300 };
-    
-    page.open('http://localhost:3000/templates/countdown.html', function (status) {
+    page.viewportSize = { width: body.width, height: body.height };
+
+    page.open('http://localhost:' + body.port + '/templates/countdown.html', function (status) {
         console.log(status);
         
         if (status !== 'success') {
@@ -33,11 +35,27 @@ var service = server.listen(port, function(request, response) {
               console.log('Renderizando: ' +output+i+'.bmp');
               page.render(output+i+'.bmp');
             }
+
+            page.evaluate(function(body) {
+                var element = document.getElementById('teste');
+
+                element.style["width"] = body.width + "px";
+                element.style["height"] = body.height + "px";
+                element.style["font-family"] = body.fontFamily;
+                element.style["font-size"] = body.fontSize;
+                element.style["color"] = body.color;
+                element.style["background-color"] = body.bg;
+                element.style["line-height"] = body.height + "px";
+            }, body);
             
-            for (var i = offset;i <= limit;i++) {
-                page.evaluate(function(i) {
-                    document.getElementById('teste').innerHTML = '14:32:'+i;
-                }, i);  
+            var j = 0;
+            for (var i = body.offset;i <= body.limit;i++) {
+                var date = body.dates[j++].join(":");
+
+                page.evaluate(function(date) {
+                    document.getElementById('teste').innerHTML = date;
+                }, date);  
+
                 // next step
                 rasterize(i);
             }

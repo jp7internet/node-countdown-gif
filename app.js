@@ -42,7 +42,13 @@ app.get('/serve', function (req, res) {
 
         let filePath = tmpDir + '/' + name + '.gif';
 
-        exec('convert -delay 100 ' + tmpDir + '/animation*.gif ' + filePath, (error, stdout, stderr) => {
+        let delay = 100;
+
+        if (millis === 'true') {
+            delay /= process.env.FRAME_RATE;
+        }
+
+        exec('convert -delay ' + delay + ' ' + tmpDir + '/animation*.gif ' + filePath, (error, stdout, stderr) => {
             if (error) {
                 console.error('exec error:', error);
                 return;
