@@ -6,3 +6,4 @@ tmp
 !.env.example
 tmp/output*.*
 
+public/templates/output.html

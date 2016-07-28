@@ -1,0 +1,59 @@
+<html>
+    <head>
+        <style type="text/css">
+
+            #countdown {
+                width: {{ width }};
+                height: {{ height }};
+                font-family: {{ fontFamily }};
+                font-size: {{ fontSize }};
+                color: {{ color }};
+                background-color: {{ bg }};
+                display: table;
+            }
+
+            #countdown div {
+                display: table-cell;
+                vertical-align: middle;
+            }
+
+            #countdown div > div {
+                width: {{ divWidth }};
+                float: left;
+                text-align: center;
+            }
+
+            #countdown div > div.not(.labels):after {
+                content: ":";
+                color: {{ color }};
+            }
+
+            .labels{
+                font-size: {{ divFontSize }};
+                margin-bottom: 10px;
+            }
+
+            .clearfix {
+                clear: both;
+            }
+
+        </style>
+    </head>
+    <body type="x-tmpl-mustache">
+        <div id="countdown">
+            <div>
+            {{#format}}
+                <div class="labels">
+                    {{ text }}
+                </div>
+            {{/format}}
+                <div class="clearfix"></div>
+            {{#dates}}
+                <div>
+                    {{ text }}
+                </div>
+            {{/dates}}
+            </div>
+        </div>
+    </body>
+</html>

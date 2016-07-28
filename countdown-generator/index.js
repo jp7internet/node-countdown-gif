@@ -2,6 +2,8 @@ const spawn = require('child_process').spawn;
 const exec = require('child_process').exec;
 const moment = require('moment');
 const request = require('request');
+const Mustache = require('mustache');
+const fs = require('fs');
 const os = require('os');
 const tmpDir = os.tmpdir();
 
@@ -30,6 +32,13 @@ module.exports = {
         this.showDays = showDays === 'true';
         this.multiplier = this.millis ? process.env.FRAME_RATE : 1;
         this.delay = 1000 / this.multiplier;
+        this.mode = mode;
+        this.width = width;
+        this.height = height;
+        this.fontFamily = font;
+        this.color = color;
+        this.bg = bg;
+
 
         let diff = this.timeDiff(time, message);
 
@@ -38,14 +47,16 @@ module.exports = {
         // Set request body
         var contents = {
             dates: dates,
-            color: "#" + color,
-            bg: "#" + bg,
-            width: width,
-            height: height,
-            fontSize: Math.floor(width / 12),
-            fontFamily: font,
-            divWidth: Math.floor(width / dates[0].length), // All arrays in dates have the same length
-            port: process.env.PORT || 3000 
+            width: this.width,
+            height: this.height
+            // color: "#" + color,
+            // bg: "#" + bg,
+            // width: width,
+            // height: height,
+            // fontSize: Math.floor(width / 12),
+            // fontFamily: font,
+            // divWidth: Math.floor(width / dates[0].length), // All arrays in dates have the same length
+            // port: process.env.PORT || 3000 
         };
 
         // Start encoding
@@ -79,6 +90,10 @@ module.exports = {
 
         var dates = [];
 
+        var format = this.getFormat(this.mode);
+
+        var template = fs.readFileSync('public/templates/countdown.mustache', "utf8");
+
         // set minimum and maximum millisecond threshold
         let min = 1 + (this.delay * (this.multiplier - 1));
         let max = this.delay * this.multiplier;
@@ -86,7 +101,7 @@ module.exports = {
 
             for (var i = 0; i < this.frames; i++) {
 
-                var dateString = [];
+                var dateObjects = [];
 
                 let days = Math.floor(time.asDays());
                 let hours = Math.floor(time.asHours() - (days * 24));
@@ -99,12 +114,12 @@ module.exports = {
                 }
 
                 if (days > 0) {
-                    dateString.push(this.pad(days, '0', 2));
+                    dateObjects.push({ text: this.pad(days, '0', 2) });
                 }
 
-                dateString.push(this.pad(hours, '0', 2));
-                dateString.push(this.pad(minutes, '0', 2));
-                dateString.push(this.pad(seconds, '0', 2));
+                dateObjects.push({ text: this.pad(hours, '0', 2) });
+                dateObjects.push({ text: this.pad(minutes, '0', 2) });
+                dateObjects.push({ text: this.pad(seconds, '0', 2) });
 
                 if (this.millis) {
                     let milliseconds = this.clamp(Math.floor(Math.random() * (max - min + 1)) + min, 0, 999); // Must be less than 1000
@@ -112,7 +127,7 @@ module.exports = {
                     min -= this.delay;
                     max -= this.delay;
 
-                    dateString.push(this.pad(milliseconds, '0', 3));
+                    dateObjects.push({ text: this.pad(milliseconds, '0', 3) });
                 }
 
                 if (this.millis) {
@@ -129,7 +144,23 @@ module.exports = {
                     time.subtract(1, 'seconds');
                 }
 
-                dates.push(dateString);
+                // Render HTML and push it to dates
+                var fontSize = Math.floor(this.width / 12);
+
+                var data = {
+                    "width": this.width + "px",
+                    "height": this.height + "px",
+                    "fontFamily": this.fontFamily,
+                    "fontSize": fontSize + "px",
+                    "color": "#" + this.color,
+                    "bg": "#" + this.bg,
+                    "divWidth": Math.floor(this.width / dateObjects.length) + "px",
+                    "divFontSize": Math.floor(fontSize / 2) + "px",
+                    "format": format,
+                    "dates" : dateObjects
+                };
+
+                dates.push(Mustache.render(template, data));
             }
 
         } else {
@@ -140,14 +171,39 @@ module.exports = {
     },
     getFormat: function(mode) {
         var modes = {
-            S: ["D", "H", "M", "S"],
-            M: ["Dias", "Horas", "Min.", "Seg."],
-            L: ["Dias", "Horas", "Minutos", "Segundos"]
+            S: [
+                { text: "D" },
+                { text: "H" }, 
+                { text: "M" }, 
+                { text: "S" }
+            ],
+            M: [
+                { text: "Dias" },
+                { text: "Horas" },
+                { text: "Min." },
+                { text: "Seg." }
+            ],
+            L: [
+                { text: "Dias" },
+                { text: "Horas" },
+                { text: "Minutos" },
+                { text: "Segundos" }
+            ]
         };
 
         if (!this.showDays) {
-
+            for (key in modes) {
+                modes[key].shift();
+            }
         }
+
+        if (this.millis) {
+            modes["S"].push({ text: "ms" });
+            modes["M"].push({ text: "Mil." });
+            modes["L"].push({ text: "Milissegundos" });
+        }
+
+        return modes[mode];
     },
     pad: function(str, char, len) {
         str = str + '';
@@ -170,11 +226,8 @@ module.exports = {
             requestBody.dates = contents.dates.slice(offset - 1, limit);
         }
 
-        requestBody.offset = offset;
-        requestBody.limit = limit;
-
         var options = {
-            uri: 'http://localhost:' + port + '?offset=' + offset + '&limit=' + limit,
+            uri: 'http://localhost:' + port,
             method: "POST",
             body: requestBody,
             json: true
@@ -189,7 +242,7 @@ module.exports = {
         return new Promise((resolve, reject) => {
             request(options, function(response) {
 
-                var cmd = "convert -delay " + imageMagickDelay + " " + tmpDir + "/outputserver" + port + "{" + offset + ".." + limit + "}.bmp " + tmpDir + "/animation_" + port + ".gif";
+                var cmd = "convert -delay " + imageMagickDelay + " " + tmpDir + "/outputserver" + port + "*.bmp " + tmpDir + "/animation_" + port + ".gif";
                 console.log(cmd);
 
                 exec(cmd, (error, stdout, stderr) => {
