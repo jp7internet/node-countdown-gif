@@ -1,5 +1,6 @@
 const spawn = require('child_process').spawn;
 const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
 const moment = require('moment');
 const request = require('request');
 const Mustache = require('mustache');
@@ -8,7 +9,7 @@ const os = require('os');
 const tmpDir = os.tmpdir();
 
 module.exports = {
-    init: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 30, font = "monospace", message = "That's all folks!", mode = "M", showDays = true, millis = false, cb) {
+    init: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 30, font = "monospace", message = "Promoção Encerrada!", mode = "M", showDays = true, millis = false, cb) {
 
         var procs = os.cpus().length;
 
@@ -38,6 +39,7 @@ module.exports = {
         this.fontFamily = font;
         this.color = color;
         this.bg = bg;
+        this.name = name;
 
 
         let diff = this.timeDiff(time, message);
@@ -65,12 +67,38 @@ module.exports = {
         var start = Date.now();
         var promises = [];
 
-        for (var i = 0; i < procs; i++) {
-            promises.push(this.encode(i, contents));
+        if (contents.dates.length === 1) {
+            promises.push(this.encode(0, contents));
+        } else {
+            for (var i = 0; i < procs; i++) {
+                promises.push(this.encode(i, contents));
+            }
         }
 
         Promise.all(promises).then(function() {
             console.log('Generated animations in %d milliseconds.', Date.now() - start);
+
+            let delay = 100;
+
+            if (this.millis) {
+                delay /= process.env.FRAME_RATE;
+            }
+
+            let filePath = tmpDir + '/' + this.name + '.gif';
+
+            exec('convert -delay ' + delay + ' ' + tmpDir + '/animation*.gif ' + filePath, (error, stdout, stderr) => {
+                if (error) {
+                    console.error('exec error:', error);
+                    return;
+                }
+
+                console.log('stdout:', stdout);
+                console.log('stderr:', stderr);
+                
+                execSync('rm ' + tmpDir + '/output*.bmp');
+                execSync('rm ' + tmpDir + '/animation*.gif');
+            });
+
             typeof cb === 'function' && cb();
         })
     },
@@ -93,6 +121,16 @@ module.exports = {
         var format = this.getFormat(this.mode);
 
         var template = fs.readFileSync('public/templates/countdown.mustache', "utf8");
+
+        var core = {
+            "width": this.width + "px",
+            "height": this.height + "px",
+            "fontFamily": this.fontFamily,
+            "fontSize": "5vw",
+            "color": "#" + this.color,
+            "bg": "#" + this.bg,
+            "divFontSize": "2.5vw"
+        }
 
         // set minimum and maximum millisecond threshold
         let min = 1 + (this.delay * (this.multiplier - 1));
@@ -144,27 +182,22 @@ module.exports = {
                     time.subtract(1, 'seconds');
                 }
 
-                // Render HTML and push it to dates
-                var fontSize = Math.floor(this.width / 12);
-
-                var data = {
-                    "width": this.width + "px",
-                    "height": this.height + "px",
-                    "fontFamily": this.fontFamily,
-                    "fontSize": fontSize + "px",
-                    "color": "#" + this.color,
-                    "bg": "#" + this.bg,
+                var data = Object.assign({
                     "divWidth": Math.floor(this.width / dateObjects.length) + "px",
-                    "divFontSize": Math.floor(fontSize / 2) + "px",
                     "format": format,
                     "dates" : dateObjects
-                };
+                }, core);
 
                 dates.push(Mustache.render(template, data));
             }
 
         } else {
-            dates.push(time);
+            var data = Object.assign({
+                "divWidth": "100%",
+                "end": time
+            }, core);
+
+            dates.push(Mustache.render(template, data));
         }
 
         return dates;
