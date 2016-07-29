@@ -24,6 +24,23 @@ cd phantomjs-2.1.1-linux-x86_64
 mv phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin
 ```
 
+## Set up the PhantomJS service
+
+```bash
+cd /usr/local/lib
+wget https://gist.githubusercontent.com/ultimagriever/72fcb3e4446460638d65aecd2fbee98c/raw/2bce772ec376ad585f19ba7b22f585f9520ed37a/phantom.sh
+chmod +x phantom.sh
+ln -s /usr/local/lib/phantom.sh /usr/local/bin/phantom
+cd /etc/systemd/system
+wget https://gist.githubusercontent.com/ultimagriever/72fcb3e4446460638d65aecd2fbee98c/raw/2bce772ec376ad585f19ba7b22f585f9520ed37a/phantom.service
+```
+
+### Usage
+
+    service phantom start
+    service phantom stop
+    service phantom restart
+
 ## URL Parameters (*required)
 
 * **time*** - Date &amp; time when your countdown will end [e.g. 2016-06-24T20:35]
