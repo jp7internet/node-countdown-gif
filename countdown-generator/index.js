@@ -86,6 +86,8 @@ module.exports = {
 
             let filePath = tmpDir + '/' + this.name + '.gif';
 
+            console.log(filePath);
+
             exec('convert -delay ' + delay + ' ' + tmpDir + '/animation*.gif ' + filePath, (error, stdout, stderr) => {
                 if (error) {
                     console.error('exec error:', error);
@@ -100,7 +102,7 @@ module.exports = {
             });
 
             typeof cb === 'function' && cb();
-        })
+        }.bind(this))
     },
     timeDiff: function (dateString, message) {
         let target = moment(dateString);
