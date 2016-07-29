@@ -97,11 +97,12 @@ module.exports = {
                 console.log('stdout:', stdout);
                 console.log('stderr:', stderr);
                 
+
+                typeof cb === 'function' && cb();
+
                 execSync('rm ' + tmpDir + '/output*.bmp');
                 execSync('rm ' + tmpDir + '/animation*.gif');
             });
-
-            typeof cb === 'function' && cb();
         }.bind(this))
     },
     timeDiff: function (dateString, message) {
