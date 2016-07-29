@@ -2,6 +2,28 @@
 
 The very simple app I have created allows you to generate a countdown timer animated gif depending on the URL parameters you provide. [View demo](https://date-gif.herokuapp.com/).
 
+## Requirements
+
+* PhantomJS
+* Node.js
+* ImageMagick
+
+```bash
+# Utils
+apt install -y htop imagemagick
+# Node.js
+curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+apt install -y nodejs
+npm install -g pm2
+# PhantomJS
+apt install -y fontconfig ttf-mscorefonts-installer 
+cd /tmp
+wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
+tar -zxvf phantomjs-2.1.1-linux-x86_64.tar.bz2
+cd phantomjs-2.1.1-linux-x86_64
+mv ? /usr/local/bin
+```
+
 ## URL Parameters (*required)
 
 * **time*** - Date &amp; time when your countdown will end [e.g. 2016-06-24T20:35]
