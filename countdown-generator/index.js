@@ -42,23 +42,14 @@ module.exports = {
         this.name = name;
 
 
-        let diff = this.timeDiff(time, message);
+        diff = this.timeDiff(time, message);
 
-        var dates = this.getDates(diff);
-
+        var dates = this.getDatesHTML(this.getDates(diff));
         // Set request body
         var contents = {
             dates: dates,
             width: this.width,
             height: this.height
-            // color: "#" + color,
-            // bg: "#" + bg,
-            // width: width,
-            // height: height,
-            // fontSize: Math.floor(width / 12),
-            // fontFamily: font,
-            // divWidth: Math.floor(width / dates[0].length), // All arrays in dates have the same length
-            // port: process.env.PORT || 3000 
         };
 
         // Start encoding
@@ -105,6 +96,65 @@ module.exports = {
             });
         }.bind(this))
     },
+    initPreview: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 30, font = "monospace", message = "Promoção Encerrada!", mode = "M", showDays = true, millis = false, cb) {
+        
+        this.showDays = showDays === 'true';
+        this.millis = millis === 'true';
+
+        var diff = this.timeDiff(time, message);
+
+        var core = {
+            "width": width + "px",
+            "height": height + "px",
+            "fontFamily": font,
+            "fontSize": "5vw",
+            "color": "#" + color,
+            "bg": "#" + bg,
+            "divFontSize": "2.5vw"
+        };
+
+        var format = this.getFormat(mode);
+
+        var dates = [];
+
+        if (typeof diff === 'object') {
+            
+            let days = Math.floor(diff.asDays());
+            let hours = Math.floor(diff.asHours()) - (days * 24);
+            let minutes = Math.floor(diff.asMinutes()) - (days * 24 * 60) - (hours * 60);
+            let seconds = Math.floor(diff.asSeconds()) - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
+
+
+            if (this.showDays) {
+                dates.push({ text: this.pad(days, '0', 2) });
+            } else {
+                days = 0;
+                hours = Math.floor(diff.asHours());
+            }
+
+            dates.push({ text: this.pad(hours, '0', 2) });
+            dates.push({ text: this.pad(minutes, '0', 2) });
+            dates.push({ text: this.pad(seconds, '0', 2) });
+
+            if (this.millis) {
+                let milliseconds = Math.floor(Math.random() * 999);
+
+                dates.push({ text: this.pad(milliseconds, '0', 3) });
+            }
+
+            var data = Object.assign({
+                "divWidth": Math.floor(width / dates.length) + "px",
+                "format": format,
+                "dates": dates
+            }, core);
+        }
+        else {
+            var data = Object.assign({ end: diff, divWidth: "100%" }, core);
+        }
+
+        cb(data);
+
+    },
     timeDiff: function (dateString, message) {
         let target = moment(dateString);
         let current = moment();
@@ -117,9 +167,8 @@ module.exports = {
 
         return moment.duration(difference);
     },
-    getDates: function(time) {
-
-        var dates = [];
+    getDatesHTML: function(dates) {
+        var datesHTML = [];
 
         var format = this.getFormat(this.mode);
 
@@ -134,6 +183,30 @@ module.exports = {
             "bg": "#" + this.bg,
             "divFontSize": "2.5vw"
         }
+
+        if (dates.length > 1) {
+            for (var i = 0; i < dates.length; i++) {
+                var data = Object.assign({
+                    "divWidth": Math.floor(this.width / dates[i].length) + "px",
+                    "format": format,
+                    "dates" : dates[i]
+                }, core);
+
+                datesHTML.push(Mustache.render(template, data));
+            }
+        } else {
+            var data = Object.assign({
+                "divWidth": "100%"
+            }, dates[0], core);
+
+            datesHTML.push(Mustache.render(template, data));
+        }
+
+        return datesHTML;
+    },
+    getDates: function(time) {
+
+        var dates = [];
 
         // set minimum and maximum millisecond threshold
         let min = 1 + (this.delay * (this.multiplier - 1));
@@ -185,22 +258,11 @@ module.exports = {
                     time.subtract(1, 'seconds');
                 }
 
-                var data = Object.assign({
-                    "divWidth": Math.floor(this.width / dateObjects.length) + "px",
-                    "format": format,
-                    "dates" : dateObjects
-                }, core);
-
-                dates.push(Mustache.render(template, data));
+                dates.push(dateObjects);
             }
 
         } else {
-            var data = Object.assign({
-                "divWidth": "100%",
-                "end": time
-            }, core);
-
-            dates.push(Mustache.render(template, data));
+            dates.push({ end: time });
         }
 
         return dates;
