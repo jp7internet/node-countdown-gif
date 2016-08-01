@@ -7,6 +7,7 @@ const Mustache = require('mustache');
 const fs = require('fs');
 const os = require('os');
 const tmpDir = os.tmpdir();
+const slug = require('slug');
 
 module.exports = {
     init: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 30, font = "monospace", message = "Promoção Encerrada!", mode = "M", showDays = true, millis = false, cb) {
@@ -75,7 +76,7 @@ module.exports = {
                 delay /= process.env.FRAME_RATE;
             }
 
-            let filePath = tmpDir + '/' + this.name + '.gif';
+            let filePath = tmpDir + '/' + slug(this.name, '_') + '.gif';
 
             console.log(filePath);
 

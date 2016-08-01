@@ -9,6 +9,7 @@ const tmpDir = os.tmpdir();
 const mu = require('mu2');
 const bodyParser = require('body-parser');
 const moment = require('moment');
+const slug = require('slug');
 
 const publicDir = __dirname + '/public/';
 
@@ -38,7 +39,7 @@ app.get('/serve', function (req, res) {
 
     CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, millis, () => {
         console.log('Callback');
-        let filePath = tmpDir + '/' + name + '.gif';
+        let filePath = tmpDir + '/' + slug(name, '_') + '.gif';
 
         res.sendFile(filePath);
     });
