@@ -2,7 +2,6 @@ var webserver = require('webserver');
 var server = webserver.create();
 var system = require('system');
 
-var tmpDir = system.env['TMPDIR'];
 var port = system.args[1];
 
 var service = server.listen(port, function(request, response) {
@@ -10,8 +9,8 @@ var service = server.listen(port, function(request, response) {
     var payload = JSON.parse(request.post);
 
     var start = performance.now();
-    var output = tmpDir + 'outputserver'+port;
-    
+    var output = payload.path + '/' + 'frame_' + port;
+
     console.log('Abrindo');
     var page = require('webpage').create();
     page.settings.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36';
@@ -30,8 +29,8 @@ var service = server.listen(port, function(request, response) {
         } else {
 
             function rasterize(i) {
-              console.log('Renderizando: ' +output+i+'.bmp');
-              page.render(output+i+'.bmp');
+              console.log('Renderizando: ' + output + '_' + i + '.bmp');
+              page.render(output+ '_' + i + '.bmp');
             }
 
             function pad(str, char, len) {
@@ -58,4 +57,4 @@ var service = server.listen(port, function(request, response) {
     }); 
 });
 
-console.log('Listenning');
+console.log('Listening on port ' + port);

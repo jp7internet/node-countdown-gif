@@ -10,6 +10,7 @@ const mu = require('mu2');
 const bodyParser = require('body-parser');
 const moment = require('moment');
 const slug = require('slug');
+const execSync = require('child_process').execSync;
 
 const publicDir = __dirname + '/public/';
 
@@ -37,11 +38,16 @@ app.get('/serve', function (req, res) {
         throw Error('Time parameter is required.');
     }
 
-    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, millis, () => {
-        console.log('Callback');
-        let filePath = tmpDir + '/' + slug(name, '_') + '.gif';
+    var timestamp = (new Date()).getTime();
 
-        res.sendFile(filePath);
+    CountdownGenerator.init(time, width, height, color, bg, name, frames, font, message, mode, showDays, millis, timestamp, () => {
+        console.log('Callback');
+        let dirPath = tmpDir + '/phantomjs/' + slug(name, '_') + '_' + timestamp;
+        let filePath = dirPath + '/animation.gif';
+
+        res.sendFile(filePath, function() {
+            execSync('rm -rf ' + dirPath);
+        });
     });
 });
 

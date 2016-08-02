@@ -10,7 +10,7 @@ const tmpDir = os.tmpdir();
 const slug = require('slug');
 
 module.exports = {
-    init: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 30, font = "monospace", message = "Promoção Encerrada!", mode = "M", showDays = true, millis = false, cb) {
+    init: function (time, width = 200, height = 200, color = "000000", bg = "FFFFFF", name = "test", frames = 30, font = "monospace", message = "Promoção Encerrada!", mode = "M", showDays = true, millis = false, timestamp, cb) {
 
         var procs = os.cpus().length;
 
@@ -41,7 +41,7 @@ module.exports = {
         this.color = color;
         this.bg = bg;
         this.name = name;
-
+        this.path = tmpDir + '/phantomjs/' + slug(name, '_') + '_' + timestamp; 
 
         diff = this.timeDiff(time, message);
 
@@ -76,11 +76,11 @@ module.exports = {
                 delay /= process.env.FRAME_RATE;
             }
 
-            let filePath = tmpDir + '/' + slug(this.name, '_') + '.gif';
+            let filePath = this.path + '/animation.gif';
 
             console.log(filePath);
 
-            exec('convert -delay ' + delay + ' ' + tmpDir + '/animation*.gif ' + filePath, (error, stdout, stderr) => {
+            exec('convert -delay ' + delay + ' ' + this.path + '/animation_*.gif ' + filePath, (error, stdout, stderr) => {
                 if (error) {
                     console.error('exec error:', error);
                     return;
@@ -92,8 +92,6 @@ module.exports = {
 
                 typeof cb === 'function' && cb();
 
-                execSync('rm ' + tmpDir + '/output*.bmp');
-                execSync('rm ' + tmpDir + '/animation*.gif');
             });
         }.bind(this))
     },
@@ -324,6 +322,7 @@ module.exports = {
         if (requestBody.dates.length > 1) {
             requestBody.dates = contents.dates.slice(offset - 1, limit);
         }
+        requestBody.path = this.path
 
         var options = {
             uri: 'http://localhost:' + port,
@@ -338,10 +337,10 @@ module.exports = {
             imageMagickDelay /= process.env.FRAME_RATE;
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise(function(resolve, reject) {
             request(options, function(response) {
 
-                var cmd = "convert -delay " + imageMagickDelay + " " + tmpDir + "/outputserver" + port + "*.bmp " + tmpDir + "/animation_" + port + ".gif";
+                var cmd = "convert -delay " + imageMagickDelay + " " + this.path + "/frame_" + port + "_*.bmp " + this.path + "/animation_" + port + ".gif";
                 console.log(cmd);
 
                 exec(cmd, (error, stdout, stderr) => {
@@ -349,9 +348,9 @@ module.exports = {
                         reject('exec error:' + error.Error);
                     }
 
-                    resolve('Generated ' + tmpDir + '/animation_' + port + '.gif');
+                    resolve('Generated ' + this.path + '/animation_' + port + '.gif');
                 });
-            });
-        });
+            }.bind(this));
+        }.bind(this));
     }
 }
